@@ -1,0 +1,6 @@
+[template]
+src = "config.ini.tmpl"
+dest = "/miflora-mqtt-daemon/config.ini"
+keys = [
+  "/miflora"
+]

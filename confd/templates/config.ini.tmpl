@@ -1,0 +1,94 @@
+# Configuration file for Xiaomi Mi Flora Plant Sensor MQTT Client/Daemon
+# Source: https://github.com/ThomDietrich/miflora-mqtt-daemon
+#
+# Uncomment and adapt all settings as needed.
+
+[General]
+
+{{- if exists "/miflora/general/reporting/method" }}
+# The operation mode of the program. Determines wether retrieved sensor data is published via MQTT or stdout/file.
+# Currently supported:
+#      mqtt-json - Publish to an mqtt broker, json encoded (Default)
+#     mqtt-homie - Publish to an mqtt broker following the Homie MQTT convention (https://github.com/marvinroger/homie)
+# mqtt-smarthome - Publish to an mqtt broker following the mqtt-smarthome proposal
+#                  (https://github.com/mqtt-smarthome/mqtt-smarthome)
+#           json - Print to stdout as json encoded string
+reporting_method = {{ getv "/miflora/general/reporting/method" }}
+{{ end }}
+{{- if exists "/miflora/general/adapter" }}
+# The bluetooth adapter that should be used to connect to Mi Flora devices (Default: hci0)
+adapter = {{ getv "/miflora/general/adapter" }}
+{{- end}}
+
+[Daemon]
+{{- if exists "/miflora/daemon/enabled"}}
+# Enable or Disable an endless execution loop (Default: true)
+enabled = {{getv "/miflora/daemon/enabled"}}
+{{end -}}
+{{- if exists "/miflora/daemon/period" }}
+# The period between two measurements in seconds (Default: 300)
+period = {{ getv "/miflora/daemon/period" }}
+{{- end}}
+
+[MQTT]
+{{- if exists "/miflora/mqtt/hostname" }}
+# The hostname or IP address of the MQTT broker to connect to (Default: localhost)
+hostname = {{ getv "/miflora/mqtt/hostname" }}
+{{ end -}}
+
+{{- if exists "/miflora/mqtt/port" }}
+# The TCP port the MQTT broker is listening on (Default: 1883)
+port = {{ getv "/miflora/mqtt/port" }}
+{{ end -}}
+
+{{- if exists "/miflora/mqtt/keepalive" }}
+# Maximum period in seconds between ping messages to the broker. (Default: 60)
+keepalive = {{ getv "/miflora/mqtt/keepalive" }}
+{{ end -}}
+
+{{- if exists "/miflora/mqtt/topic" }}
+# The MQTT base topic to publish all Mi Flora sensor data topics under.
+# Default depends on the configured reporting_mode (mqtt-json, mqtt-smarthome: miflora, mqtt-homie: homie)
+base_topic = {{ getv "/miflora/mqtt/topic" }}
+{{- end }}
+
+# Homie specific: The device ID for this daemon instance (Default: miflora-mqtt-daemon)
+homie_device_id = {{ getv "/miflora/mqtt/homie/device/id" "miflora-mqtt-daemon" }}
+
+{{ if exists "/miflora/mqtt/username" -}}
+# The MQTT broker authentification credentials (Default: no authentication)
+username = {{ getv "/miflora/mqtt/username" }}
+{{ end -}}
+
+{{- if exists "/miflora/mqtt/password" -}}
+password = {{ getv "/miflora/mqtt/password" }}
+{{ end -}}
+
+{{- if exists "/miflora/mqtt/tls/enabled" }}
+# Enable TLS/SSL on the connection
+tls = {{ getv "/miflora/mqtt/tls/enabled" }}
+{{ end -}}
+
+{{- if exists "/miflora/mqtt/tls/ca/cert" }}
+# Path to CA Certificate file to verify host
+tls_ca_cert = {{ getv "/miflora/mqtt/tls/ca/cert" }}
+{{ end -}}
+
+{{- if exists "/miflora/mqtt/tls/client/key" }}
+# Path to TLS client auth key file
+tls_keyfile = {{ getv "/miflora/mqtt/tls/client/key" }}
+{{ end -}}
+
+{{- if exists "/miflora/mqtt/tls/client/cert" }}
+# Path to TLS client auth certificate file
+tls_certfile = {{ getv "/miflora/mqtt/tls/client/cert" }}
+{{- end}}
+
+[Sensors]
+{{- range $i := ls "/miflora/sensors" -}}
+{{- range $key := ls (printf "/miflora/sensors/%s" $i) }}
+{{if exists (printf "/miflora/sensors/%s/%s" $i $key) }}
+{{- $key }}={{- getv (printf "/miflora/sensors/%s/%s" $i $key) -}}
+{{end}}
+{{end -}}
+{{end -}}

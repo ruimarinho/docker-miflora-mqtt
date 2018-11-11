@@ -1,6 +1,6 @@
 # ruimarinho/miflora-mqtt
 
-Run the [miflora-mqtt-daemon](https://github.com/ThomDietrich/miflora-mqtt-daemon) in Docker with support for multi-architecture (amd64 and armv7).
+Run the [miflora-mqtt-daemon](https://github.com/ThomDietrich/miflora-mqtt-daemon) in Docker with support for multi-architecture (AMD64, ARMv7 and ARMv8).
 
 [![build status][travis-image]][travis-url]
 [![ruimarinho/miflora-mqtt][docker-stars-image]][docker-hub-url]  [![ruimarinho/miflora-mqtt][docker-pulls-image]][docker-hub-url]  
@@ -80,7 +80,7 @@ docker run \
 
 ## Multi-Architecture Support
 
-This container has built-in multi-architecture support for amd64, armv7 (Raspberry Pi Zero W, Raspberry Pi 3B), which means pulling `ruimarinho/miflora-mqtt` will automatically select the right image for the host architecture.
+This container has built-in multi-architecture support for AMD64, ARMv7 (Raspberry Pi Zero W, Raspberry Pi 3B) and ARMv8 (Raspberry Pi 3B+), which means pulling `ruimarinho/miflora-mqtt` will automatically select the right image for the host's architecture.
 
 ## License
 

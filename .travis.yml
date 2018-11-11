@@ -13,6 +13,7 @@ env:
   matrix:
     - ARCH=amd64
     - ARCH=arm32v7
+    - ARCH=arm64v8
 
 stages:
   - name: test
@@ -33,9 +34,11 @@ jobs:
         - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker pull "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64"
         - docker pull "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7"
+        - docker pull "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm64v8"
         - >
-          docker manifest create "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" &&
+          docker manifest create "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm64v8" &&
           docker manifest annotate "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" --os linux --arch arm --variant v6 &&
+          docker manifest annotate "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm64v8" --os linux --arch arm64 --variant v8 &&
           docker manifest push "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH"
         - >
           if [ -n "$TRAVIS_TAG" ]; then
@@ -44,7 +47,7 @@ jobs:
           fi
         - >
           if [ -n "$TRAVIS_TAG" ]; then
-            docker manifest create "$DOCKER_USERNAME/$DOCKER_REPOSITORY:latest" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" &&
-            docker manifest annotate "$DOCKER_USERNAME/$DOCKER_REPOSITORY:latest" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" --os linux --arch arm --variant v6 &&
+            docker manifest create "$DOCKER_USERNAME/$DOCKER_REPOSITORY:latest" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm64v8" &&
+            docker manifest annotate "$DOCKER_USERNAME/$DOCKER_REPOSITORY:latest" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm64v8" --os linux --arch arm64 --variant v8 &&
             docker manifest push "$DOCKER_USERNAME/$DOCKER_REPOSITORY:latest"
           fi

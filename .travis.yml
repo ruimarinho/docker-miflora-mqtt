@@ -1,0 +1,50 @@
+addons:
+  apt:
+    packages:
+      - docker-ce
+
+before_install:
+  - mkdir ~/.docker && echo '{ "experimental":"enabled" }' > ~/.docker/config.json
+  - docker --version
+
+env:
+  global:
+    - VERSION=52e4658b40bacbe0809754ed58effc7759c3de48
+  matrix:
+    - ARCH=amd64
+    - ARCH=arm32v7
+
+stages:
+  - name: test
+    if: tag IS present OR branch = master
+  - name: push
+    if: tag IS present OR branch = master
+
+script:
+  - docker run --rm --privileged multiarch/qemu-user-static:register --reset
+  - docker build -t "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-$ARCH" --build-arg "ARCH=$ARCH" --build-arg "VERSION=$VERSION" .
+  - echo "$DOCKER_PASSWORD" | docker login -u $DOCKER_USERNAME --password-stdin
+  - docker push "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-$ARCH"
+
+jobs:
+  include:
+    - stage: push
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+        - docker pull "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64"
+        - docker pull "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7"
+        - >
+          docker manifest create "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" &&
+          docker manifest annotate "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" --os linux --arch arm --variant v6 &&
+          docker manifest push "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH"
+        - >
+          if [ -n "$TRAVIS_TAG" ]; then
+            docker tag "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64" $DOCKER_USERNAME/$DOCKER_REPOSITORY:latest &&
+            docker push $DOCKER_USERNAME/$DOCKER_REPOSITORY:latest
+          fi
+        - >
+          if [ -n "$TRAVIS_TAG" ]; then
+            docker manifest create "$DOCKER_USERNAME/$DOCKER_REPOSITORY:latest" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-amd64" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" &&
+            docker manifest annotate "$DOCKER_USERNAME/$DOCKER_REPOSITORY:latest" "$DOCKER_USERNAME/$DOCKER_REPOSITORY:$TRAVIS_BRANCH-arm32v7" --os linux --arch arm --variant v6 &&
+            docker manifest push "$DOCKER_USERNAME/$DOCKER_REPOSITORY:latest"
+          fi

@@ -1,19 +1,19 @@
 # ruimarinho/miflora-mqtt
 
-Run the [miflora-mqtt-daemon](https://github.com/ThomDietrich/miflora-mqtt-daemon) in Docker.
+Run the [miflora-mqtt-daemon](https://github.com/ThomDietrich/miflora-mqtt-daemon) in Docker with support for multi-architecture (amd64 and armv7).
 
 [![build status][travis-image]][travis-url]
 [![ruimarinho/miflora-mqtt][docker-stars-image]][docker-hub-url]  [![ruimarinho/miflora-mqtt][docker-pulls-image]][docker-hub-url]  
 
 ## miflora-mqtt-daemon
 
-The miflora-mqtt-daemon is a bluetooth low energy to mqtt gateway enabling you to receive sensor information from Xiaomi Mi Plant sensors if they are away from your home automation server.
+The `miflora-mqtt-daemon` is a bluetooth low energy to mqtt gateway enabling you to receive sensor information from Xiaomi Mi Plant sensors if they are away from your home automation server.
 
 With this container, it becomes amazingly simply to setup a Raspberry or similar device running a container-optimized operating system such as HypriotOS and transform it into a low cost sensor gateway.
 
 ## Usage
 
-All settings of the miflora-mqtt-daemon can be dynamically configured via environment variables (thanks to _confd_) without having to create a new image or bind-mounting the configuration file.
+All settings of the `miflora-mqtt-daemon` can be dynamically configured via environment variables (thanks to _confd_) without having to create a new image or bind-mounting the configuration file.
 
 The environment variable are organized into four groups, as per the original configuration file:
 
@@ -26,9 +26,21 @@ Using the scheme above, the configuration can be as simple as setting the follow
 
 ```sh
 docker run \
+  --name miflora-mqtt \
+  --net=host \
   -e 'MIFLORA_MQTT_HOSTNAME=127.0.0.1' \
-  -e 'MIFLORA_SENSORS_0_Schefflera@Foo=C4:7C:8D:11:22:33' \
+  -e 'MIFLORA_SENSORS_0_Schefflera=C4:7C:8D:11:22:33' \
   -d ruimarinho/miflora-mqtt
+```
+
+Defining a sensor's location for metadata purposes via an environment variable is more complicated as `miflora-mqtt-daemon` uses the at-sign (@) as a separator, which is not valid on most shells. However, it is still possible to do it by replacing the entrypoint as shown below:
+
+```sh
+docker run --net=host \
+  --name miflora-mqtt \
+  --entrypoint sh \
+  ruimarinho/miflora-mqtt -c \
+  'env MIFLORA_SENSORS_0_Schefflera@Kitchen=C4:7C:8D:11:22:33 confd -onetime -backend env --log-level panic && python miflora-mqtt-daemon.py'
 ```
 
 If you need to further customize the daemon's settings, check the next chapter for a detailed reference guide.
@@ -63,8 +75,12 @@ docker run \
   --rm \
   --entrypoint sh \
   -ti ruimarinho/miflora-mqtt \
-  -c confd -onetime -backend env -log-level debug && cat /miflora-mqtt-daemon/config.ini'
+  -c 'confd -onetime -backend env -log-level debug && cat /miflora-mqtt-daemon/config.ini'
 ```
+
+## Multi-Architecture Support
+
+This container has built-in multi-architecture support for amd64, armv7 (Raspberry Pi Zero W, Raspberry Pi 3B), which means pulling `ruimarinho/miflora-mqtt` will automatically select the right image for the host architecture.
 
 ## License
 
